@@ -41,7 +41,7 @@ const userSchema = new Schema({
 // this function needs a instance to call , => const user = User.finById("asdasas") |||||||  => ab user.genrateAuthToken so
 // this._id is the id of the user which is find
 userSchema.methods.generateAuthToken = function (){
-    const token = jwt.sign({_id : this._id }, process.env.JWT_SECRET)
+    const token = jwt.sign({_id : this._id }, process.env.JWT_SECRET, {expiresIn : '2m'})
     return token;
 }
 

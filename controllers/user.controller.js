@@ -1,6 +1,8 @@
 const userModel = require("../models/users.model");
 const { createUser, existingUser, confirmUser } = require("../services/user.service");
 const {validationResult} = require("express-validator")
+const blackListTokenModel = require("../models/blackListToken.model");
+const jwt = require("jsonwebtoken");
 
 module.exports.postRegisterUser =  async (req, res, next) => {
     
@@ -58,7 +60,12 @@ module.exports.postLogin =  async (req,res,next) => {
         if(!isconfirmUserToken.token){
             return res.status(isconfirmUserToken.statusCode).json({message : isconfirmUserToken.message})
         }
-
+         
+        res.cookie("uberToken", isconfirmUserToken.token, {
+            // httpOnly : true,
+            // secure : true,
+            // sameSite : "none"
+        })
         return res.status(isconfirmUserToken.statusCode).json({
             token : isconfirmUserToken.token,
 
@@ -70,4 +77,49 @@ module.exports.postLogin =  async (req,res,next) => {
         next(error);
     }
 
+}
+
+
+module.exports.getProfile = async (req, res, next) => {
+
+    try {
+        
+        return res.status(200).json({user : req.user})
+
+    } catch (error) {
+        
+        error.statusCode = error.statusCode || 500;
+        next(error);
+    }
+}
+
+module.exports.logout = async (req, res, next) => {
+    try {
+        
+        let uberToken = req.cookies.uberToken || req.headers.authorization ;
+
+        if(uberToken.startsWith("Bearer")){
+            uberToken = uberToken.split(" ")[1];
+        }
+
+        const decoded = jwt.decode(uberToken, process.env.JWT_SECRET);
+
+        if (!decoded || !decoded.exp) {
+            return res.status(400).json({ message: "Invalid token" });
+        }
+
+        const currentTime = Math.floor(Date.now() / 1000);
+        const remainingTime = decoded.exp - currentTime;
+
+       // Store token in blacklist with dynamic TTL
+       await blackListTokenModel.create({ token: uberToken, expiresAt: new Date(decoded.exp * 1000) });
+        
+        res.clearCookie("uberToken");
+        return res.status(200).json({message : "Logout Successfully"})
+
+    } catch (error) {
+        
+        error.statusCode = error.statusCode || 500;
+        next(error);
+    }
 }

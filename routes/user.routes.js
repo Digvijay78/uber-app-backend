@@ -3,6 +3,7 @@ const express = require('express')
 const router = express.Router();
 const {body} = require('express-validator');
 const userController = require('../controllers/user.controller');
+const authMiddleware = require('../middlewares/isAuth.middleware')
 
 
 //POST -> registration
@@ -19,6 +20,13 @@ router.post("/login" , [
     body("email").isEmail().withMessage("Email is invalid or empty"),
     body("password").isLength({min : 3}).withMessage("Password Character must be of  character")
 ], userController.postLogin)
+
+
+//Get => profile
+router.get("/profile" , authMiddleware.isAuthUser , userController.getProfile)
+
+//Get => logout
+router.get('/logout' , authMiddleware.isAuthUser , userController.logout)
 
 
 module.exports = router
