@@ -109,7 +109,11 @@ module.exports.logout = async (req, res, next) => {
         }
 
         const currentTime = Math.floor(Date.now() / 1000);
-        const remainingTime = decoded.exp - currentTime;
+        const remainingTTL = decoded.exp - currentTime;
+
+        if (remainingTTL <= 0) {
+            return res.status(400).json({ message: "Token already expired" });
+        }
 
        // Store token in blacklist with dynamic TTL
        await blackListTokenModel.create({ token: uberToken, expiresAt: new Date(decoded.exp * 1000) });

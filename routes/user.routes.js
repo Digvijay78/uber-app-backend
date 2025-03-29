@@ -23,10 +23,10 @@ router.post("/login" , [
 
 
 //Get => profile
-router.get("/profile" , authMiddleware.isAuthUser , userController.getProfile)
+router.get("/profile" , authMiddleware.isAuth("user") , userController.getProfile)
 
 //Get => logout
-router.get('/logout' , authMiddleware.isAuthUser , userController.logout)
+router.get('/logout' , authMiddleware.isAuth("user") , userController.logout)
 
 
 module.exports = router
